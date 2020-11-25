@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "453510991860",
+    "firebase_url": "https://lista-lugares.firebaseio.com",
+    "project_id": "lista-lugares",
+    "storage_bucket": "lista-lugares.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:453510991860:android:18312ef2809b84e5feb3a1",
+        "android_client_info": {
+          "package_name": "com.messengerclone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "453510991860-s824jn0v4hrq8roh60p450nc1s64g1vl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiaVbfJe4s0bK-kil25wzhEQ9qVqIexXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "453510991860-s824jn0v4hrq8roh60p450nc1s64g1vl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
