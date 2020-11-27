@@ -17,6 +17,7 @@ import auth from '@react-native-firebase/auth';
 import {useState} from 'react';
 import {Text} from 'react-native';
 import Dashboard from './views/Dashboard';
+import Header from './views/Header';
 
 declare const global: {HermesInternal: null | {}};
 
@@ -31,6 +32,7 @@ const App = () => {
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+
     console.log(subscriber);
     return subscriber;
   });
@@ -45,10 +47,12 @@ const App = () => {
     );
   }
   return (
-    <>
-      <Dashboard />
+    <View>
+      <Header />
+      {console.log(user)}
+      <Dashboard user={user} />
       {/* <Text>{user.email}</Text> */}
-    </>
+    </View>
   );
 };
 

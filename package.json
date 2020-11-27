@@ -10,10 +10,12 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@react-native-firebase/app": "^10.0.0",
-    "@react-native-firebase/auth": "^10.0.0",
+    "@react-native-firebase/app": "^10.1.0",
+    "@react-native-firebase/auth": "^10.1.0",
+    "@react-native-firebase/firestore": "^10.1.0",
     "react": "16.13.1",
-    "react-native": "0.63.3"
+    "react-native": "0.63.3",
+    "react-native-svg": "^12.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
@@ -28,6 +30,7 @@
     "eslint": "^6.5.1",
     "jest": "^25.1.0",
     "metro-react-native-babel-preset": "^0.59.0",
+    "react-native-svg-transformer": "^0.14.3",
     "react-test-renderer": "16.13.1",
     "typescript": "^3.8.3"
   },

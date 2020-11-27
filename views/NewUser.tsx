@@ -3,6 +3,32 @@ import {useState} from 'react';
 import {View, Pressable, Text, StyleSheet} from 'react-native';
 import RegisterField from '../components/RegisterField';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
+const db = firestore();
+
+auth().useEmulator('http://localhost:9099');
+
+db.settings({host: 'localhost:8080', ssl: false});
+
+const storeUser = async (email: string) => {
+  try {
+    const user = await db
+      .collection('users')
+      .doc(email)
+      .set({chat: []})
+      .then(() => {
+        console.log('Escrito');
+      })
+      .catch((err) => console.log(err));
+    // console.log('User', user);
+    // if(user != undefined)
+  } catch (error) {
+    console.error(error);
+
+    // db.collection('users').doc(email);
+  }
+};
 
 const NewUser = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('+44 7444 555666');
@@ -24,10 +50,16 @@ const NewUser = () => {
   };
 
   const signIn = async () => {
+    console.log('wtf');
+
     try {
       const user = await auth().signInWithEmailAndPassword(email, password);
+      storeUser(email);
     } catch (error) {
+      console.error(error);
+
       await auth().createUserWithEmailAndPassword(email, password);
+      storeUser(email);
     }
   };
 

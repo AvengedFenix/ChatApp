@@ -26,11 +26,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     width: 40,
     height: 40,
+    backgroundColor: '#FF5733',
   },
   card: {
     marginVertical: '5%',
-    marginHorizontal: '4%',
     flexDirection: 'row',
+    alignItems: 'flex-end',
+    width: '100%',
+    paddingHorizontal: '4%',
   },
   title: {
     fontSize: 20,
@@ -40,8 +43,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   chatInfo: {
-    top: -8,
-    marginLeft: '4%',
+    // top: -8,
+    paddingLeft: '4%',
   },
 });
 
