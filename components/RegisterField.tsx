@@ -12,10 +12,16 @@ const defaultProps: Props = {
   secure: false,
 };
 
-const PhoneField = ({label, textType, action, secure}: Props) => {
+const PhoneField = ({
+  label,
+  textType,
+  action,
+  secure,
+  onContentSizeChange,
+}: Props) => {
   const styles = StyleSheet.create({
     textField: {
-      marginHorizontal: 10,
+      marginHorizontal: 5,
       paddingLeft: 25,
       backgroundColor: '#fff',
       borderRadius: 100,

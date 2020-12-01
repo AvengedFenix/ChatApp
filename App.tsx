@@ -18,6 +18,8 @@ import {useState} from 'react';
 import {Text} from 'react-native';
 import Dashboard from './views/Dashboard';
 import Header from './views/Header';
+import {NativeRouter, Route, Switch} from 'react-router-native';
+import Chat from './views/Chat';
 
 declare const global: {HermesInternal: null | {}};
 
@@ -47,12 +49,18 @@ const App = () => {
     );
   }
   return (
-    <View>
-      <Header />
-      {console.log(user)}
-      <Dashboard user={user} />
-      {/* <Text>{user.email}</Text> */}
-    </View>
+    <NativeRouter>
+      <View style={{flex: 1}}>
+        <Header />
+        {console.log(user)}
+        {/* <Dashboard user={user} /> */}
+        {/* <Text>{user.email}</Text> */}
+        <Switch>
+          <Route exact path="/" component={() => <Dashboard user={user} />} />
+          <Route exact path="/chat/" component={Chat} />
+        </Switch>
+      </View>
+    </NativeRouter>
   );
 };
 

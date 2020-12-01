@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, FlatList} from 'react-native';
+import {View, Text, FlatList, Pressable} from 'react-native';
 import ChatPreview from './../components/ChatPreview';
 import firestore from '@react-native-firebase/firestore';
+import {Link, useHistory} from 'react-router-native';
 
 let DATA = [
   {email: 'hola@hola.com', id: '1', msg: 'dog'},
@@ -14,6 +15,7 @@ interface Message {}
 
 interface Chat {
   message?: Message;
+  id?: string;
   receiver: string;
   createdBy: string;
   creationDate: {
@@ -26,81 +28,71 @@ interface Props {
   user: any;
 }
 
-// const getChats = async (email: string): Chat[] => {
-//   const chats: Chat[] = [];
-
-//   const chatIDs = await db.collection('users').doc(email).get();
-
-//   console.log('ids', chatIDs.data().chat);
-
-//   const userChatList = chatIDs.data().chat;
-
-//   userChatList.map(async (doc: any) => {
-//     console.log('id', doc);
-
-//     const chatInfo = await db.collection('chats').doc(doc).get();
-
-//     console.log('chatInfo', JSON.stringify(chatInfo.data()));
-
-//     chats.push(chatInfo.data());
-//   });
-
-//   // await console.log('chatsss', chats);
-
-//   return chats;
-// };
-
 const Dashboard = ({user}: Props) => {
-  const [chats, setChats] = useState<Chats[]>([]);
+  const [chats, setChats] = useState<any[]>([]);
 
   const getChats = async (email: string) => {
     const chatsGetter: Chat[] = [];
 
     const chatIDs = await db.collection('users').doc(email).get();
 
-    console.log('ids', chatIDs.data().chat);
-
     const userChatList = chatIDs.data().chat;
 
-    userChatList.map(async (doc: any) => {
-      console.log('id', doc);
+    // userChatList.map(async (doc: any) => {});
 
-      const chatInfo = await db.collection('chats').doc(doc).get();
-
-      console.log('chatInfo', JSON.stringify(chatInfo.data()));
+    for (const item of userChatList) {
+      const chatInfo = await db.collection('chats').doc(item).get();
 
       chatsGetter.push(chatInfo.data());
-      console.log('getter', chatsGetter);
-    });
-    setChats(chatsGetter);
+    }
 
-    // await console.log('chatsss', chats);
+    setChats(chatsGetter);
   };
 
   useEffect(() => {
     console.log(user.email);
     getChats(user.email);
     console.log('chats state', chats);
-    DATA = chats;
-    console.log('data', DATA);
-
-    // setChats(getChats(user.email));
-    // const chatsDB: Chat[] = getChats(user.email);
   }, []);
 
-  const renderItem = ({item}: any) => (
-    <ChatPreview email={item.receiver} msg={item.createdBy} />
-  );
+  const renderItem = ({item}: any) => <Card item={item} />;
+
+  const Card = ({item}: any) => {
+    const history = useHistory();
+    return (
+      <Pressable
+        onPress={() => {
+          history.push('/chat', {id: item.id});
+        }}>
+        <ChatPreview email={item.receiver} msg={item.createdBy} />
+      </Pressable>
+    );
+  };
+
+  console.log('chats state antes de return', chats);
+
+  // const info = [
+  //   {
+  //     createdBy: 'hola@hola.com',
+  //     id: 'jl3PuBySdi5CwFR4PqSh',
+  //     receiver: 'hola123@hola.com',
+  //   },
+  // ];
 
   return (
-    <View>
-      {console.log(DATA)}
+    <View style={{height: 200}}>
+      {chats.map((item: any, idx: number) => {
+        // console.log(item)
+        return <Card key={idx} item={item} />;
+      })}
+      {/* <Text>hola</Text>
       <FlatList
-        data={DATA}
+        data={chats}
         extraData={chats}
         renderItem={renderItem}
-        keyExtractor={(item: Chat) => item.createdBy}
+        keyExtractor={(item: Chat) => item.id}
       />
+      {console.log(chats)} */}
     </View>
   );
 };

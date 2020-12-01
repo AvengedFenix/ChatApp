@@ -5,6 +5,7 @@ import Off from '../assets/icons/off.svg';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
+import {useHistory} from 'react-router-native';
 
 const fieldValue = firebase.firestore.FieldValue;
 
@@ -14,12 +15,20 @@ const signOut = async () => {
   await auth().signOut();
 };
 
-const newChat = async (phoneNumber: string) => {
+const newChat = async (phoneNumber: string): boolean => {
   const email: string | null | undefined = auth().currentUser?.email;
+
+  const receiver = db.collection('users').doc(phoneNumber);
+
+  if (!(await receiver.get()).exists) {
+    console.log('no existe');
+    return true;
+  }
 
   const newChatID: string = await db.collection('chats').doc().id;
 
   await db.collection('chats').doc(newChatID).set({
+    id: newChatID,
     createdBy: email,
     receiver: phoneNumber,
     creationDate: fieldValue.serverTimestamp(),
@@ -34,11 +43,16 @@ const newChat = async (phoneNumber: string) => {
     .collection('users')
     .doc(phoneNumber)
     .update({chat: fieldValue.arrayUnion(newChatID)});
+
+  return false;
 };
 
 const Header = () => {
   const [showModal, setShowModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [alert, setAlert] = useState<boolean>(false);
+
+  const history = useHistory();
 
   return (
     <View style={styles.container}>
@@ -46,40 +60,90 @@ const Header = () => {
         style={styles.image}
         source={require('../assets/images/person.png')}
       />
-      <Text style={styles.title}>Chats</Text>
+      <Pressable
+        onPress={() => {
+          history.push('/');
+        }}>
+        <Text style={styles.title}>Chats</Text>
+      </Pressable>
       <View style={styles.btnContainer}>
         <Pressable
-          style={styles.btn}
+          style={styles.btnAdd}
           onPress={() => {
             setShowModal(true);
           }}>
           <Text style={styles.btnText}>Add</Text>
         </Pressable>
-        <Pressable style={styles.btn} onPress={signOut}>
+        <Pressable style={styles.btnLogOut} onPress={signOut}>
           <Text style={styles.btnText}>Log Out</Text>
           {/* <Off width={240} height={40} /> */}
         </Pressable>
       </View>
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent={false}
         visible={showModal}
         onRequestClose={() => setShowModal(false)}>
-        <View>
+        {alert ? (
+          <View
+            style={{
+              backgroundColor: '#dc3545',
+              marginTop: '4%',
+              // alignSelf: 'center',
+              marginHorizontal: '2%',
+              borderRadius: 8,
+            }}>
+            <Text
+              style={{
+                // fontWeight: '100',
+                fontSize: 24,
+                color: 'white',
+                alignSelf: 'center',
+                paddingVertical: '3%',
+              }}>
+              This user is not registered
+            </Text>
+          </View>
+        ) : null}
+        <View
+          style={{
+            height: '80%',
+            marginTop: 60,
+            width: '100%',
+            paddingHorizontal: '2%',
+          }}>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              textAlign: 'center',
+            }}>
+            Create a conversation with someone!
+          </Text>
+          <Text
+            style={{
+              marginTop: 10,
+              textAlign: 'center',
+              opacity: 0.7,
+              fontSize: 16,
+            }}>
+            If the user is registered you'll be able to open a conversation,
+            just enter their phone number
+          </Text>
           <RegisterField
             label="Phone"
             textType={phoneNumber}
             action={setPhoneNumber}
           />
           <Pressable
-            style={styles.btnModal}
-            onPress={() => newChat(phoneNumber)}>
-            <Text>Close modal</Text>
+            style={styles.btnAddChat}
+            onPress={() => setAlert(newChat(phoneNumber))}>
+            <Text style={styles.btnModalText}>Create chat</Text>
           </Pressable>
           <Pressable
-            style={styles.btnModal}
+            style={styles.btnCancel}
             onPress={() => setShowModal(false)}>
-            <Text>Close modal</Text>
+            <Text style={styles.btnModalText}>Cancel</Text>
           </Pressable>
         </View>
       </Modal>
@@ -89,7 +153,10 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     margin: '4%',
+    marginHorizontal: '2%',
+    paddingHorizontal: '2%',
     flexDirection: 'row',
     // alignItems: 'flex-start',
     // flex: 1,
@@ -110,27 +177,50 @@ const styles = StyleSheet.create({
   },
   btnContainer: {
     // flex: 1,
+    justifyContent: 'center',
     flexDirection: 'row',
     marginLeft: 'auto',
-    paddingBottom: 6,
+    // paddingBottom: 6,
+    top: -2,
   },
-  btn: {
+  btnLogOut: {
+    backgroundColor: '#dc3545',
+    borderRadius: 6,
     marginHorizontal: 5,
-    // width: 50,
-    justifyContent: 'center',
+  },
+  btnAdd: {
+    backgroundColor: '#4CCC1F',
+    borderRadius: 6,
+    marginHorizontal: 5,
   },
   btnText: {
+    fontSize: 16,
+    paddingHorizontal: '3%',
+    paddingVertical: '2%',
+    color: 'white',
     alignSelf: 'center',
     textAlign: 'right',
   },
-  btnModal: {
-    backgroundColor: '#C72241',
-    width: 140,
-    height: 60,
-    borderRadius: 8,
+  btnAddChat: {
+    backgroundColor: '#4CCC1F',
     justifyContent: 'center',
-    alignItems: 'center',
+    // marginHorizontal: '10%',
     alignSelf: 'center',
+    borderRadius: 12,
+  },
+  btnCancel: {
+    marginTop: 20,
+    backgroundColor: '#dc3545',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  btnModalText: {
+    fontSize: 20,
+    color: 'white',
+    alignSelf: 'center',
+    paddingHorizontal: '5%',
+    paddingVertical: '4%',
   },
 });
 

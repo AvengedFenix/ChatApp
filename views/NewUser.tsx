@@ -4,6 +4,8 @@ import {View, Pressable, Text, StyleSheet} from 'react-native';
 import RegisterField from '../components/RegisterField';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import Messenger from '../assets/icons/messenger.svg';
+import InputScrollView from 'react-native-input-scroll-view';
 
 const db = firestore();
 
@@ -13,19 +15,15 @@ db.settings({host: 'localhost:8080', ssl: false});
 
 const storeUser = async (email: string) => {
   try {
-    const user = await db
-      .collection('users')
-      .doc(email)
-      .set({chat: []})
-      .then(() => {
-        console.log('Escrito');
-      })
-      .catch((err) => console.log(err));
+    const userRef = await db.collection('users').doc(email);
+
+    if ((await userRef.get()).exists) {
+      return;
+    } else userRef.set({chat: []});
     // console.log('User', user);
     // if(user != undefined)
   } catch (error) {
     console.error(error);
-
     // db.collection('users').doc(email);
   }
 };
@@ -33,27 +31,37 @@ const storeUser = async (email: string) => {
 const NewUser = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('+44 7444 555666');
   const [confirm, setConfirm] = useState<any>(null);
+  const [code, setCode] = useState('123456');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [textAreaHeight, setTextAreaHeight] = useState(null);
 
   const signInPhone = async () => {
-    const confirmation = await auth()
-      .signInWithPhoneNumber(phoneNumber)
-      .then(() => {
-        console.log('Success');
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    setConfirm(confirmation);
-    await console.log(confirm);
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      console.log('confirmation', confirmation);
+      setConfirm(confirmation);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const confirmCode = async () => {
+    console.log(code);
+
+    try {
+      await confirm.confirm(code);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const signIn = async () => {
     console.log('wtf');
 
     try {
-      const user = await auth().signInWithEmailAndPassword(email, password);
+      console.log('try');
+      await auth().signInWithEmailAndPassword(email, password);
       storeUser(email);
     } catch (error) {
       console.error(error);
@@ -77,50 +85,73 @@ const NewUser = () => {
     // }).catch;
   };
 
+  const onContentSizeChange = ({nativeEvent: event}) => {
+    setTextAreaHeight(event.contentSize.height);
+  };
+
   const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      marginHorizontal: '2%',
+    },
+
     submitPressable: {
       alignSelf: 'center',
       justifyContent: 'center',
-      backgroundColor: '#20A4F3',
+      backgroundColor: '#4CCC1F',
       height: 50,
-      width: 200,
-      borderRadius: 8,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 5,
-      },
-      shadowOpacity: 0.34,
-      shadowRadius: 6.27,
-      elevation: 10,
+      width: '100%',
+      borderRadius: 16,
+      // shadowColor: '#000',
+      // shadowOffset: {
+      //   width: 0,
+      //   height: 5,
+      // },
+      // shadowOpacity: 0.34,
+      // shadowRadius: 6.27,
+      // elevation: 10,
+      marginVertical: 10,
     },
 
     submitText: {
       fontFamily: 'Raleway-medium',
       alignSelf: 'center',
-      fontSize: 28,
+      fontSize: 16,
       textTransform: 'uppercase',
       color: '#fff',
     },
   });
 
   return (
-    <View style={{flex: 1}}>
-      <RegisterField
-        label="Phone number"
-        textType={phoneNumber}
-        action={setPhoneNumber}
-      />
-      <RegisterField label="Email" textType={email} action={setEmail} />
-      <RegisterField
-        label="Password"
-        textType={password}
-        action={setPassword}
-        secure={true}
-      />
-      <Pressable style={styles.submitPressable} onPress={signIn}>
-        <Text style={styles.submitText}>Ingresar</Text>
-      </Pressable>
+    <View style={styles.container}>
+      <InputScrollView keyboardOffset={70}>
+        <Messenger
+          style={{alignSelf: 'center', marginTop: 100}}
+          width={250}
+          height={250}
+        />
+        <View style={{marginTop: 0}}>
+          <RegisterField
+            label="Phone number"
+            textType={phoneNumber}
+            action={setPhoneNumber}
+          />
+          <RegisterField label="Email" textType={email} action={setEmail} />
+          <RegisterField
+            label="Password"
+            textType={password}
+            action={setPassword}
+            secure={true}
+            // onContentSizeChange={onContentSizeChange}
+          />
+          <Pressable style={styles.submitPressable} onPress={signIn}>
+            <Text style={styles.submitText}>Ingresar</Text>
+          </Pressable>
+          <Pressable style={styles.submitPressable} onPress={confirmCode}>
+            <Text style={styles.submitText}>Confirmar</Text>
+          </Pressable>
+        </View>
+      </InputScrollView>
     </View>
   );
 };

@@ -29,7 +29,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF5733',
   },
   card: {
-    marginVertical: '5%',
+    // backgroundColor: '#FF5733',
+    marginVertical: '2%',
     flexDirection: 'row',
     alignItems: 'flex-end',
     width: '100%',
