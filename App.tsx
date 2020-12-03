@@ -20,6 +20,9 @@ import Dashboard from './views/Dashboard';
 import Header from './views/Header';
 import {NativeRouter, Route, Switch} from 'react-router-native';
 import Chat from './views/Chat';
+import OneSignal from 'react-native-onesignal';
+
+import {ONESIGNAL_PROJECT_ID} from '@env';
 
 declare const global: {HermesInternal: null | {}};
 
@@ -34,11 +37,43 @@ const App = () => {
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    OneSignal.setLogLevel(6, 0);
+
+    OneSignal.init(ONESIGNAL_PROJECT_ID, {
+      kOSSettingsKeyAutoPrompt: false,
+      kOSSettingsKeyInAppLaunchURL: false,
+      kOSSettingsKeyInFocusDisplayOption: 2,
+    });
+    OneSignal.inFocusDisplaying(2);
+
+    OneSignal.addEventListener('received', onReceived);
+    OneSignal.addEventListener('opened', onOpened);
+    OneSignal.addEventListener('ids', onIds);
 
     console.log(subscriber);
-    return subscriber;
-  });
+    return () => {
+      OneSignal.removeEventListener('received', onReceived);
+      OneSignal.removeEventListener('opened', onOpened);
+      OneSignal.removeEventListener('ids', onIds);
+      subscriber;
+    };
+  }, []);
 
+  const onReceived = (notification) => {
+    console.log('Notification received: ', notification);
+  };
+
+  const onOpened = (openResult) => {
+    console.log('Message: ', openResult.notification.payload.body);
+    console.log('Data: ', openResult.notification.payload.additionalData);
+    console.log('isActive: ', openResult.notification.isAppInFocus);
+    console.log('openResult: ', openResult);
+  };
+
+  const onIds = (device) => {
+    console.log('Device info: ', device);
+  };
+  
   if (initializing) return null;
 
   if (!user) {
@@ -53,8 +88,6 @@ const App = () => {
       <View style={{flex: 1}}>
         <Header />
         {console.log(user)}
-        {/* <Dashboard user={user} /> */}
-        {/* <Text>{user.email}</Text> */}
         <Switch>
           <Route exact path="/" component={() => <Dashboard user={user} />} />
           <Route exact path="/chat/" component={Chat} />

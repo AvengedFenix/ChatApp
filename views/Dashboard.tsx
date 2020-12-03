@@ -3,18 +3,15 @@ import {View, Text, FlatList, Pressable} from 'react-native';
 import ChatPreview from './../components/ChatPreview';
 import firestore from '@react-native-firebase/firestore';
 import {Link, useHistory} from 'react-router-native';
+import {cloudFunctions, db} from '../services/Firebase';
 
-let DATA = [
-  {email: 'hola@hola.com', id: '1', msg: 'dog'},
-  {email: 'tigre@hola.com', id: '1', msg: 'que pex'},
-];
-
-const db = firestore();
+// const db = firestore();
+cloudFunctions.useFunctionsEmulator('http://localhost:5001');
 
 interface Message {}
 
 interface Chat {
-  message?: Message;
+  message?: any;
   id?: string;
   receiver: string;
   createdBy: string;
@@ -28,23 +25,35 @@ interface Props {
   user: any;
 }
 
+const fetchChats = cloudFunctions.httpsCallable('getChats');
+
 const Dashboard = ({user}: Props) => {
   const [chats, setChats] = useState<any[]>([]);
 
   const getChats = async (email: string) => {
-    const chatsGetter: Chat[] = [];
+    console.log('getChats local');
+    let chatsGetter: Chat[] = [];
 
-    const chatIDs = await db.collection('users').doc(email).get();
+    try {
+      const functionCall = await fetchChats({email: email});
 
-    const userChatList = chatIDs.data().chat;
-
-    // userChatList.map(async (doc: any) => {});
-
-    for (const item of userChatList) {
-      const chatInfo = await db.collection('chats').doc(item).get();
-
-      chatsGetter.push(chatInfo.data());
+      chatsGetter = functionCall.data;
+    } catch (error) {
+      console.log(error);
     }
+    console.log('chatsGetter', chatsGetter);
+
+    // const chatIDs = await db.collection('users').doc(email).get();
+
+    // const userChatList = chatIDs.data().chat;
+
+    // // userChatList.map(async (doc: any) => {});
+
+    // for (const item of userChatList) {
+    //   const chatInfo = await db.collection('chats').doc(item).get();
+
+    //   chatsGetter.push(chatInfo.data());
+    // }
 
     setChats(chatsGetter);
   };

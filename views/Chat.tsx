@@ -14,14 +14,13 @@ import {useLocation} from 'react-router-native';
 // import {useParams, useRouteMatch} from 'react-router-native';
 import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
-
-const db = firestore();
+import {cloudFunctions, db, fieldValue} from '../services/Firebase';
 
 const Chat = () => {
   const [messages, setMessages] = useState<any>([]);
   const [newMessage, setNewMessage] = useState('');
   const location = useLocation();
-  const id = location.state.id;
+  const id = location.state.id; //Paso de parametros con react router
   const chatConnection = db.collection('chats').doc(id);
 
   const sendMessage = async () => {
