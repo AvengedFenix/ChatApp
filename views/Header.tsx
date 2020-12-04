@@ -7,10 +7,11 @@ import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
 import {useHistory} from 'react-router-native';
 import OneSignal from 'react-native-onesignal';
+import {db, cloudFunctions} from '../services/Firebase';
 
 const fieldValue = firebase.firestore.FieldValue;
 
-const db = firestore();
+const newChatCloudFunction = cloudFunctions.httpsCallable('newChat');
 
 const signOut = async () => {
   await auth().signOut();

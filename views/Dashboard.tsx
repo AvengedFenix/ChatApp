@@ -6,7 +6,7 @@ import {Link, useHistory} from 'react-router-native';
 import {cloudFunctions, db} from '../services/Firebase';
 
 // const db = firestore();
-cloudFunctions.useFunctionsEmulator('http://localhost:5001');
+// cloudFunctions.useFunctionsEmulator('http://localhost:5001');
 
 interface Message {}
 

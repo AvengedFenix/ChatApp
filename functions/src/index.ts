@@ -15,12 +15,12 @@ admin.initializeApp();
 const db = admin.firestore();
 
 export const storeUser = functions.https.onCall(async (data: any) => {
-  const {email} = data.body;
+  const {email, oneSignal} = data.body;
   try {
     const userRef = await db.collection('users').doc(email);
     if ((await userRef.get()).exists) {
       return;
-    } else userRef.set({chat: []});
+    } else userRef.set({chat: [], device: oneSignal});
   } catch (error) {
     console.log(error);
   }
@@ -29,32 +29,42 @@ export const storeUser = functions.https.onCall(async (data: any) => {
 export const newChat = functions.https.onCall(
   async (data: any, context: any) => {
     const email = context.auth.token.email;
-    const {receiverPhoneNumber} = data;
+    const {receiverPhoneNumber, oneSignalUserId} = data;
 
     const receiverRef = db.collection('users').doc(receiverPhoneNumber);
     if (!(await receiverRef.get()).exists) {
       console.log('no existe');
       return true;
     }
-    const newChatID: string = await db.collection('chats').doc().id;
+
+    const newChatID: string = db.collection('chats').doc().id;
+    const senderRef = db.collection('users').doc(email?.toString());
+    const receiverRef = db.collection('users').doc(phoneNumber);
+    const receiverOneSignalId = (await receiverRef.get()).data().device;
 
     await db.collection('chats').doc(newChatID).set({
       id: newChatID,
       createdBy: email,
-      receiver: receiverPhoneNumber,
+      creatorOneSignalId: oneSignalUserId,
+      receiverOneSignalId: receiverOneSignalId,
+      receiver: phoneNumber,
       creationDate: fieldValue.serverTimestamp(),
     });
 
     await db
-      .collection('users')
-      .doc(email?.toString())
-      .update({chat: fieldValue.arrayUnion(newChatID)});
+      .collection('chats')
+      .doc(newChatID)
+      .collection('messages')
+      .doc()
+      .set({
+        message: 'Your new conversation is ready, say hello!',
+        sender: 'system',
+        creationDate: fieldValue.serverTimestamp(),
+      });
 
-    await db
-      .collection('users')
-      .doc(receiverPhoneNumber)
-      .update({chat: fieldValue.arrayUnion(newChatID)});
+    await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
 
+    await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
     return false;
   },
 );

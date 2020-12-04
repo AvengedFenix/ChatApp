@@ -3,31 +3,35 @@ import {useState} from 'react';
 import {View, Pressable, Text, StyleSheet} from 'react-native';
 import RegisterField from '../components/RegisterField';
 import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
 import Messenger from '../assets/icons/messenger.svg';
 import InputScrollView from 'react-native-input-scroll-view';
 import OneSignal from 'react-native-onesignal';
+import {db, cloudFunctions} from '../services/Firebase';
 
-const db = firestore();
-
-// auth().useEmulator('http://localhost:9099');
-
-// db.settings({host: 'localhost:8080', ssl: false});
+const storeUserCloudFunction = cloudFunctions.httpsCallable('storeUser');
 
 const storeUser = async (email: string, oneSignal: string) => {
   try {
-    const userRef = await db.collection('users').doc(email);
-
-    if ((await userRef.get()).exists) {
-      return;
-    } else userRef.set({chat: [], device: oneSignal});
-    // console.log('User', user);
-    // if(user != undefined)
+    await storeUserCloudFunction({email: email, oneSignal: oneSignal});
   } catch (error) {
-    console.error(error);
-    // db.collection('users').doc(email);
+    console.log(error);
   }
 };
+
+// const storeUser = async (email: string, oneSignal: string) => {
+//   try {
+//     const userRef = await db.collection('users').doc(email);
+
+//     if ((await userRef.get()).exists) {
+//       return;
+//     } else userRef.set({chat: [], device: oneSignal});
+//     // console.log('User', user);
+//     // if(user != undefined)
+//   } catch (error) {
+//     console.error(error);
+//     // db.collection('users').doc(email);
+//   }
+// };
 
 const NewUser = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('+44 7444 555666');

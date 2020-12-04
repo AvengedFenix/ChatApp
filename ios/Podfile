@@ -12,6 +12,8 @@ target 'MessengerClone' do
 
   pod 'react-native-onesignal', :path => '../node_modules/react-native-onesignal'
 
+  pod 'appcenter-core', :path => '../node_modules/appcenter'
+
   target 'MessengerCloneTests' do
     inherit! :complete
     # Pods for testing
