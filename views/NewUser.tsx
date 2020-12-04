@@ -6,20 +6,21 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Messenger from '../assets/icons/messenger.svg';
 import InputScrollView from 'react-native-input-scroll-view';
+import OneSignal from 'react-native-onesignal';
 
 const db = firestore();
 
-auth().useEmulator('http://localhost:9099');
+// auth().useEmulator('http://localhost:9099');
 
-db.settings({host: 'localhost:8080', ssl: false});
+// db.settings({host: 'localhost:8080', ssl: false});
 
-const storeUser = async (email: string) => {
+const storeUser = async (email: string, oneSignal: string) => {
   try {
     const userRef = await db.collection('users').doc(email);
 
     if ((await userRef.get()).exists) {
       return;
-    } else userRef.set({chat: []});
+    } else userRef.set({chat: [], device: oneSignal});
     // console.log('User', user);
     // if(user != undefined)
   } catch (error) {
@@ -35,6 +36,11 @@ const NewUser = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [textAreaHeight, setTextAreaHeight] = useState(null);
+  let oneSignalId;
+  OneSignal.getPermissionSubscriptionState((status) => {
+    console.log('status new user:', status, '\nuser ID: ', status.userId);
+    oneSignalId = status.userId;
+  });
 
   const signInPhone = async () => {
     try {
@@ -62,12 +68,12 @@ const NewUser = () => {
     try {
       console.log('try');
       await auth().signInWithEmailAndPassword(email, password);
-      storeUser(email);
+      storeUser(email, oneSignalId);
     } catch (error) {
       console.error(error);
 
       await auth().createUserWithEmailAndPassword(email, password);
-      storeUser(email);
+      storeUser(email, oneSignalId);
     }
   };
 

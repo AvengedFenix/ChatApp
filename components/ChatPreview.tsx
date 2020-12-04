@@ -15,7 +15,6 @@ const ChatPreview = ({email, msg}: Props) => {
       />
       <View style={styles.chatInfo}>
         <Text style={styles.title}>{email}</Text>
-        <Text style={styles.msg}>{msg}</Text>
       </View>
     </View>
   );
@@ -26,7 +25,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     width: 40,
     height: 40,
-    backgroundColor: '#FF5733',
+    // backgroundColor: '#FF5733',
   },
   card: {
     // backgroundColor: '#FF5733',
@@ -37,8 +36,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: '4%',
   },
   title: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
+    paddingBottom: 5,
   },
   msg: {
     fontSize: 14,

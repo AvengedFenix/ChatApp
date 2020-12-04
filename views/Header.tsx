@@ -6,6 +6,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import firebase from '@react-native-firebase/app';
 import {useHistory} from 'react-router-native';
+import OneSignal from 'react-native-onesignal';
 
 const fieldValue = firebase.firestore.FieldValue;
 
@@ -15,7 +16,10 @@ const signOut = async () => {
   await auth().signOut();
 };
 
-const newChat = async (phoneNumber: string): boolean => {
+const newChat = async (
+  phoneNumber: string,
+  oneSignalUserId: string,
+): boolean => {
   const email: string | null | undefined = auth().currentUser?.email;
 
   const receiver = db.collection('users').doc(phoneNumber);
@@ -25,24 +29,29 @@ const newChat = async (phoneNumber: string): boolean => {
     return true;
   }
 
-  const newChatID: string = await db.collection('chats').doc().id;
+  const newChatID: string = db.collection('chats').doc().id;
+  const senderRef = db.collection('users').doc(email?.toString());
+  const receiverRef = db.collection('users').doc(phoneNumber);
+  const receiverOneSignalId = (await receiverRef.get()).data().device;
 
   await db.collection('chats').doc(newChatID).set({
     id: newChatID,
     createdBy: email,
+    creatorOneSignalId: oneSignalUserId,
+    receiverOneSignalId: receiverOneSignalId,
     receiver: phoneNumber,
     creationDate: fieldValue.serverTimestamp(),
   });
 
-  await db
-    .collection('users')
-    .doc(email?.toString())
-    .update({chat: fieldValue.arrayUnion(newChatID)});
+  await db.collection('chats').doc(newChatID).collection('messages').doc().set({
+    message: 'Your new conversation is ready, say hello!',
+    sender: 'system',
+    creationDate: fieldValue.serverTimestamp(),
+  });
 
-  await db
-    .collection('users')
-    .doc(phoneNumber)
-    .update({chat: fieldValue.arrayUnion(newChatID)});
+  await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
+
+  await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
 
   return false;
 };
@@ -51,6 +60,9 @@ const Header = () => {
   const [showModal, setShowModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [alert, setAlert] = useState<boolean>(false);
+  const oneSignalId = OneSignal.getPermissionSubscriptionState(
+    (status) => status.userId,
+  );
 
   const history = useHistory();
 
@@ -89,13 +101,11 @@ const Header = () => {
             style={{
               backgroundColor: '#dc3545',
               marginTop: '4%',
-              // alignSelf: 'center',
               marginHorizontal: '2%',
               borderRadius: 8,
             }}>
             <Text
               style={{
-                // fontWeight: '100',
                 fontSize: 24,
                 color: 'white',
                 alignSelf: 'center',
@@ -137,7 +147,7 @@ const Header = () => {
           />
           <Pressable
             style={styles.btnAddChat}
-            onPress={() => setAlert(newChat(phoneNumber))}>
+            onPress={() => setAlert(newChat(phoneNumber, oneSignalId))}>
             <Text style={styles.btnModalText}>Create chat</Text>
           </Pressable>
           <Pressable

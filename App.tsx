@@ -26,76 +26,135 @@ import {ONESIGNAL_PROJECT_ID} from '@env';
 
 declare const global: {HermesInternal: null | {}};
 
-const App = () => {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState(null);
+let subscriber: any;
+let oneSignalUserId: string;
 
-  const onAuthStateChanged = (user) => {
-    setUser(user);
-    if (initializing) setInitializing(false);
-  };
-
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {initializing: true, user: null};
     OneSignal.setLogLevel(6, 0);
 
-    OneSignal.init(ONESIGNAL_PROJECT_ID, {
-      kOSSettingsKeyAutoPrompt: false,
-      kOSSettingsKeyInAppLaunchURL: false,
-      kOSSettingsKeyInFocusDisplayOption: 2,
-    });
+    try {
+      OneSignal.init(ONESIGNAL_PROJECT_ID, {
+        kOSSettingsKeyAutoPrompt: false,
+        kOSSettingsKeyInAppLaunchURL: false,
+        kOSSettingsKeyInFocusDisplayOption: 2,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    console.log('past init');
+
     OneSignal.inFocusDisplaying(2);
 
-    OneSignal.addEventListener('received', onReceived);
-    OneSignal.addEventListener('opened', onOpened);
-    OneSignal.addEventListener('ids', onIds);
+    OneSignal.addEventListener('received', this.onReceived);
+    OneSignal.addEventListener('opened', this.onOpened);
+    OneSignal.addEventListener('ids', this.onIds);
 
-    console.log(subscriber);
-    return () => {
-      OneSignal.removeEventListener('received', onReceived);
-      OneSignal.removeEventListener('opened', onOpened);
-      OneSignal.removeEventListener('ids', onIds);
-      subscriber;
-    };
-  }, []);
+    subscriber = auth().onAuthStateChanged(this.onAuthStateChanged);
 
-  const onReceived = (notification) => {
+    // // this.onIds = this.onIds.bind(this);
+  }
+
+  componentWillUnmount() {
+    OneSignal.removeEventListener('received');
+    OneSignal.removeEventListener('opened');
+    OneSignal.removeEventListener('ids');
+
+    subscriber;
+  }
+
+  onReceived(notification) {
     console.log('Notification received: ', notification);
-  };
+  }
 
-  const onOpened = (openResult) => {
+  onOpened(openResult) {
     console.log('Message: ', openResult.notification.payload.body);
     console.log('Data: ', openResult.notification.payload.additionalData);
     console.log('isActive: ', openResult.notification.isAppInFocus);
     console.log('openResult: ', openResult);
-  };
+  }
 
-  const onIds = (device) => {
+  onIds(device) {
     console.log('Device info: ', device);
-  };
-  
-  if (initializing) return null;
+    oneSignalUserId = device.userId;
+    console.log('one signal', oneSignalUserId);
+  }
 
-  if (!user) {
+  onAuthStateChanged = (user) => {
+    this.setState({user: user});
+    if (this.state.initializing) this.setState({initializing: false});
+  };
+
+  render() {
+    if (this.state.initializing) return null;
+
+    if (!this.state.user) {
+      return (
+        <View style={{flex: 1, backgroundColor: '#fff'}}>
+          <NewUser />
+        </View>
+      );
+    }
     return (
-      <View style={{flex: 1, backgroundColor: '#fff'}}>
-        <NewUser />
-      </View>
+      <NativeRouter>
+        <View style={{flex: 1}}>
+          {console.log('process', process.env.NODE_ENV)}
+          <Header />
+          {console.log(this.state.user)}
+          <Switch>
+            <Route
+              exact
+              path="/"
+              component={() => <Dashboard user={this.state.user} />}
+            />
+            <Route exact path="/chat/" component={Chat} />
+          </Switch>
+        </View>
+      </NativeRouter>
     );
   }
-  return (
-    <NativeRouter>
-      <View style={{flex: 1}}>
-        <Header />
-        {console.log(user)}
-        <Switch>
-          <Route exact path="/" component={() => <Dashboard user={user} />} />
-          <Route exact path="/chat/" component={Chat} />
-        </Switch>
-      </View>
-    </NativeRouter>
-  );
-};
+}
+
+// const App = () => {
+//   const [initializing, setInitializing] = useState(true);
+//   const [user, setUser] = useState(null);
+
+//   const onAuthStateChanged = (user) => {
+//     setUser(user);
+//     if (initializing) setInitializing(false);
+//   };
+
+//   useEffect(() => {
+//     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+
+//     console.log(subscriber);
+//     return subscriber;
+//   }, []);
+
+//   if (initializing) return null;
+
+//   if (!user) {
+//     return (
+//       <View style={{flex: 1, backgroundColor: '#fff'}}>
+//         <NewUser />
+//       </View>
+//     );
+//   }
+//   return (
+//     <NativeRouter>
+//       <View style={{flex: 1}}>
+//         <Header />
+//         {console.log(user)}
+//         <Switch>
+//           <Route exact path="/" component={() => <Dashboard user={user} />} />
+//           <Route exact path="/chat/" component={Chat} />
+//         </Switch>
+//       </View>
+//     </NativeRouter>
+//   );
+// };
 
 const styles = StyleSheet.create({
   scrollView: {

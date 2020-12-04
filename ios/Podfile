@@ -10,6 +10,8 @@ target 'MessengerClone' do
 
   pod 'RNFBFirestore', :path => '../node_modules/@react-native-firebase/firestore'
 
+  pod 'react-native-onesignal', :path => '../node_modules/react-native-onesignal'
+
   target 'MessengerCloneTests' do
     inherit! :complete
     # Pods for testing

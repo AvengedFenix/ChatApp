@@ -15,10 +15,12 @@ import {useLocation} from 'react-router-native';
 import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import {cloudFunctions, db, fieldValue} from '../services/Firebase';
+import OneSignal from 'react-native-onesignal';
 
 const Chat = () => {
   const [messages, setMessages] = useState<any>([]);
   const [newMessage, setNewMessage] = useState('');
+
   const location = useLocation();
   const id = location.state.id; //Paso de parametros con react router
   const chatConnection = db.collection('chats').doc(id);
@@ -26,14 +28,15 @@ const Chat = () => {
   const sendMessage = async () => {
     await chatConnection.collection('messages').doc().set({
       message: newMessage,
-      creationDate: firebase.firestore.FieldValue.serverTimestamp(),
+      creationDate: fieldValue.serverTimestamp(),
       sender: auth().currentUser.email,
     });
   };
 
+  let content;
   // const messagesListener = () => {};
 
-  const getMessages = () => {
+  const getMessages = async () => {
     console.log('message ID', location.state.id);
 
     console.log('antes de msgList');
@@ -41,17 +44,12 @@ const Chat = () => {
     const msgList: any = [];
     let msgs: any;
 
-    // return new Promise(async (resolve, reject) => {
-    //   let resolveOnce = (doc: any) => {
-    //     resolveOnce = () => {};
-    //     resolve(doc);
-    //   };
+    const chatRef = db.collection('chats').doc(id);
+    const receiverId = (await chatRef.get()).data().receiverOneSignalId;
 
-    db.collection('chats')
-      .doc(id)
+    chatRef
       .collection('messages')
       .orderBy('creationDate', 'asc')
-      .limit(10)
       .onSnapshot(
         (querySnapshot) => {
           console.log('query snapshot', querySnapshot.docs);
@@ -67,59 +65,24 @@ const Chat = () => {
                 console.log('msg List', msgList);
 
                 msgList.push(data);
-                // setMessages((prevState: any) => [...prevState, data.message]);
-                // for (const doc of msgs) {
-                //   console.log(doc.data());
 
-                //   msgList.push(doc.data().message);
-                // }
-                // setMessages(msgList);\
+                OneSignal.postNotification(data.message);
+
                 break;
               default:
                 break;
             }
           }
-          // msgs = querySnapshot.docs;
-
-          // querySnapshot.forEach(async (doc) => {
-          //   await msgList.push(doc.data().message);
-          // });
-
-          // console.log(
-          //   'map querySnapshot',
-          //   querySnapshot.docs.map((doc) => doc.data()),
-          // );
-
-          // setMessages(msgs);
-
-          // querySnapshot.docs.map((doc) => msgList.push(doc.data()));
-
-          // for (const doc of msgs) {
-          //   console.log(doc.data());
-
-          //   msgList.push(doc.data().message);
-          // }
-
           console.log('antes setMessage');
           console.log(msgList);
 
-          // setMessages((prevState: any) => [...prevState, ...msgList]);
           setMessages(msgList);
-          // resolveOnce(msgs);
         },
         (error) => {
           console.log('onSnapshot error', error);
         },
       );
-    // });
-    // .get();
 
-    // setMessages(msgList);
-
-    // msgs.forEach((item: any) => {
-    //   msgList.push(item.data().message);
-    //   console.log('message', item.data().message);
-    // });
     console.log('msgList', msgList);
 
     console.log('messages', messages);
@@ -127,45 +90,16 @@ const Chat = () => {
 
   useEffect(() => {
     getMessages();
-    // setMessages((prevState) => ({...prevState}));
-
-    // const msgList: any = [];
-    // let msgs: any = [];
-
-    // const unsubscribe = db
-    //   .collection('chats')
-    //   .doc(id)
-    //   .collection('messages')
-    //   // .orderBy('creationDate', 'asc')
-    //   // .limit(10)
-    //   .onSnapshot(
-    //     (querySnapshot) => {
-    //       console.log(typeof querySnapshot);
-    //       console.log(querySnapshot.docs);
-
-    //       msgs = querySnapshot.docs;
-    //       // querySnapshot.forEach(async (doc) => {
-    //       //   await msgList.push(doc.data().message);
-    //       // });
-
-    //       msgs.map((doc) => msgList.push(doc.data()));
-
-    //       // for (const doc of msgs) {
-    //       //   msgList.push(doc.data().message);
-    //       // }
-    //       setMessages(msgList);
-    //     },
-    //     (error) => {
-    //       console.log('onSnapshot error', error);
-    //     },
-    //   );
-
-    // return unsubscribe();
   }, []);
 
   return (
     <View style={{flex: 1}}>
-      <ScrollView>
+      <ScrollView
+        // ref={(ref) => (content = ref)}
+        // onContentSizeChange={() => {
+        //   content.scrollToEnd({animated: false});
+        // }}
+        style={{marginBottom: 60}}>
         {messages.map((item: any, idx: number) => (
           <Bubble
             msg={item.message}
@@ -214,7 +148,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    marginVertical: 5,
+    height: 50,
+    // marginVertical: 5,
+    backgroundColor: 'white',
     // marginHorizontal: '2%',
   },
   input: {
@@ -227,7 +163,8 @@ const styles = StyleSheet.create({
   sendBtn: {
     alignSelf: 'center',
     alignItems: 'center',
-    borderRadius: 100,
+    backgroundColor: 'white',
+    // borderRadius: 100,
     // backgroundColor: '#0083FE',
   },
   btnText: {
