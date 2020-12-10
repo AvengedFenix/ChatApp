@@ -21,20 +21,25 @@ const newChat = async (
   phoneNumber: string,
   oneSignalUserId: string,
 ): boolean => {
-  const email: string | null | undefined = auth().currentUser?.email;
+  console.log('phoneNumber', phoneNumber);
 
+  console.log('newChat', oneSignalUserId);
+
+  // newChatCloudFunction({
+  //   receiverPhoneNumber: phoneNumber,
+  //   oneSignalUserId: oneSignalUserId,
+  // });
+
+  const email: string | null | undefined = auth().currentUser?.phoneNumber;
   const receiver = db.collection('users').doc(phoneNumber);
-
   if (!(await receiver.get()).exists) {
     console.log('no existe');
-    return true;
+    return false;
   }
-
   const newChatID: string = db.collection('chats').doc().id;
   const senderRef = db.collection('users').doc(email?.toString());
   const receiverRef = db.collection('users').doc(phoneNumber);
   const receiverOneSignalId = (await receiverRef.get()).data().device;
-
   await db.collection('chats').doc(newChatID).set({
     id: newChatID,
     createdBy: email,
@@ -43,29 +48,29 @@ const newChat = async (
     receiver: phoneNumber,
     creationDate: fieldValue.serverTimestamp(),
   });
-
   await db.collection('chats').doc(newChatID).collection('messages').doc().set({
     message: 'Your new conversation is ready, say hello!',
     sender: 'system',
     creationDate: fieldValue.serverTimestamp(),
   });
-
   await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
-
   await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
-
-  return false;
+  return true;
 };
 
 const Header = () => {
   const [showModal, setShowModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [alert, setAlert] = useState<boolean>(false);
-  const oneSignalId = OneSignal.getPermissionSubscriptionState(
-    (status) => status.userId,
-  );
+  const [alert, setAlert] = useState<boolean>(true);
+  let oneSignalId: string;
+  OneSignal.getPermissionSubscriptionState((status) => {
+    console.log('Onesignal');
+    oneSignalId = status.userId;
+  });
 
   const history = useHistory();
+
+  console.log(auth().currentUser?.phoneNumber);
 
   return (
     <View style={styles.container}>
@@ -97,7 +102,7 @@ const Header = () => {
         transparent={false}
         visible={showModal}
         onRequestClose={() => setShowModal(false)}>
-        {alert ? (
+        {alert ? null : (
           <View
             style={{
               backgroundColor: '#dc3545',
@@ -115,7 +120,7 @@ const Header = () => {
               This user is not registered
             </Text>
           </View>
-        ) : null}
+        )}
         <View
           style={{
             height: '80%',
@@ -148,12 +153,17 @@ const Header = () => {
           />
           <Pressable
             style={styles.btnAddChat}
-            onPress={() => setAlert(newChat(phoneNumber, oneSignalId))}>
+            onPress={() => {
+              setAlert(newChat(phoneNumber, oneSignalId));
+              alert ? setShowModal(false) : null;
+            }}>
             <Text style={styles.btnModalText}>Create chat</Text>
           </Pressable>
           <Pressable
             style={styles.btnCancel}
-            onPress={() => setShowModal(false)}>
+            onPress={() => {
+              setShowModal(false);
+            }}>
             <Text style={styles.btnModalText}>Cancel</Text>
           </Pressable>
         </View>
@@ -182,7 +192,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Poppins-Bold',
     paddingLeft: '4%',
-    top: -6,
+    // top: -6,
     // alignSelf: 'flex-start',
     // justifyContent: 'center'
   },

@@ -8,12 +8,57 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:453510991860:android:0e349b5bf6d05f68feb3a1",
+        "android_client_info": {
+          "package_name": "com.facebookclone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "453510991860-s824jn0v4hrq8roh60p450nc1s64g1vl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiaVbfJe4s0bK-kil25wzhEQ9qVqIexXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "453510991860-s824jn0v4hrq8roh60p450nc1s64g1vl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:453510991860:android:18312ef2809b84e5feb3a1",
         "android_client_info": {
           "package_name": "com.messengerclone"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "453510991860-a6gq7jmqder3a5vms4gnrjns7jkgmmt3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.messengerclone",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "453510991860-op5h1uokg58bu6ubc08a66k9a6e7b8a4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.messengerclone",
+            "certificate_hash": "1b66e609beb2ed7d140d6d57869df6c350a8ba78"
+          }
+        },
         {
           "client_id": "453510991860-s824jn0v4hrq8roh60p450nc1s64g1vl.apps.googleusercontent.com",
           "client_type": 3

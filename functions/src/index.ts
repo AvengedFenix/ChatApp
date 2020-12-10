@@ -2,25 +2,26 @@ import * as functions from 'firebase-functions';
 const admin = require('firebase-admin');
 const fieldValue = require('firebase-admin').firestore.FieldValue;
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
 admin.initializeApp();
 
 const db = admin.firestore();
 
 export const storeUser = functions.https.onCall(async (data: any) => {
-  const {email, oneSignal} = data.body;
+  console.log(data);
+
+  const {email, oneSignal} = data;
+
+  // const email = 'hola@hola.com';
+  // const oneSignal = 'hey';
+  console.log('store user call');
+
   try {
     const userRef = await db.collection('users').doc(email);
     if ((await userRef.get()).exists) {
       return;
-    } else userRef.set({chat: [], device: oneSignal});
+    } else {
+      userRef.set({chat: [], device: oneSignal});
+    }
   } catch (error) {
     console.log(error);
   }
@@ -28,7 +29,9 @@ export const storeUser = functions.https.onCall(async (data: any) => {
 
 export const newChat = functions.https.onCall(
   async (data: any, context: any) => {
-    const email = context.auth.token.email;
+    const email = context.auth.token.phone_number;
+    console.log(email);
+
     const {receiverPhoneNumber, oneSignalUserId} = data;
 
     const receiverRef = db.collection('users').doc(receiverPhoneNumber);
@@ -37,17 +40,22 @@ export const newChat = functions.https.onCall(
       return true;
     }
 
+    console.log('oneSignalUserId', oneSignalUserId);
+
     const newChatID: string = db.collection('chats').doc().id;
     const senderRef = db.collection('users').doc(email?.toString());
-    const receiverRef = db.collection('users').doc(phoneNumber);
+    // const receiverRef = db.collection('users').doc(phoneNumber);
+
     const receiverOneSignalId = (await receiverRef.get()).data().device;
+
+    console.log('receiverOneSignal', receiverOneSignalId);
 
     await db.collection('chats').doc(newChatID).set({
       id: newChatID,
       createdBy: email,
       creatorOneSignalId: oneSignalUserId,
       receiverOneSignalId: receiverOneSignalId,
-      receiver: phoneNumber,
+      receiver: receiverPhoneNumber,
       creationDate: fieldValue.serverTimestamp(),
     });
 
@@ -122,7 +130,7 @@ export const sendMessage = functions.https.onCall(
     await chatConnection.collection('messages').doc().set({
       message: message,
       creationDate: fieldValue.serverTimestamp(),
-      sender: context.auth.email,
+      sender: context.auth.token.email,
     });
   },
 );

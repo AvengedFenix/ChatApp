@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ScrollView,
   View,
@@ -7,33 +7,43 @@ import {
   TextInput,
   StyleSheet,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
 import Bubble from './../components/Bubble';
-import RegisterField from './../components/RegisterField';
 import {useLocation} from 'react-router-native';
-// import {useParams, useRouteMatch} from 'react-router-native';
-import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import {cloudFunctions, db, fieldValue} from '../services/Firebase';
 import OneSignal from 'react-native-onesignal';
 
+const sendMessageFunction = cloudFunctions.httpsCallable('sendMessage');
+
 const Chat = () => {
   const [messages, setMessages] = useState<any>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [fetching, setFetching] = useState(true);
+
+  // const scrollViewRef = React.createRef<ScrollView>();
 
   const location = useLocation();
   const id = location.state.id; //Paso de parametros con react router
   const chatConnection = db.collection('chats').doc(id);
 
   const sendMessage = async () => {
+    // await sendMessageFunction({message: newMessage, id: id});
+
     await chatConnection.collection('messages').doc().set({
       message: newMessage,
       creationDate: fieldValue.serverTimestamp(),
-      sender: auth().currentUser.email,
+      sender: auth().currentUser?.phoneNumber,
     });
+    setNewMessage('');
   };
 
-  let content;
+  const onNotificationOpened = (message, data, isActive) => {
+    if (data.p2p_notification) {
+      for (var num in data.p2p_notification) {
+        // console.log(data.p2p_notification[num]);
+      }
+    }
+  };
   // const messagesListener = () => {};
 
   const getMessages = async () => {
@@ -42,12 +52,19 @@ const Chat = () => {
     console.log('antes de msgList');
 
     const msgList: any = [];
-    let msgs: any;
+    let content: any = {en: 'test'};
 
     const chatRef = db.collection('chats').doc(id);
-    const receiverId = (await chatRef.get()).data().receiverOneSignalId;
+    let receiverId: string;
+    if (
+      auth().currentUser?.phoneNumber === (await chatRef.get()).data().createdBy
+    ) {
+      receiverId = (await chatRef.get()).data().receiverOneSignalId;
+    } else {
+      receiverId = (await chatRef.get()).data().creatorOneSignalId;
+    }
 
-    chatRef
+    await chatRef
       .collection('messages')
       .orderBy('creationDate', 'asc')
       .onSnapshot(
@@ -66,7 +83,7 @@ const Chat = () => {
 
                 msgList.push(data);
 
-                OneSignal.postNotification(data.message);
+                // content = {en: data};
 
                 break;
               default:
@@ -77,6 +94,23 @@ const Chat = () => {
           console.log(msgList);
 
           setMessages(msgList);
+          setFetching(false);
+          try {
+            console.log('antes de notificacion', receiverId);
+
+            // OneSignal.postNotification(content, [], null, {
+            //   include_external_user_ids: [receiverId],
+            // });
+
+            OneSignal.postNotification(
+              content,
+              {},
+              {include_player_ids: [receiverId]},
+              {},
+            );
+          } catch (error) {
+            console.log('error', error);
+          }
         },
         (error) => {
           console.log('onSnapshot error', error);
@@ -88,28 +122,35 @@ const Chat = () => {
     console.log('messages', messages);
   };
 
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const scrollToEnd = () => {
+    scrollViewRef.current?.scrollToEnd({animated: false});
+  };
+
   useEffect(() => {
     getMessages();
+    setTimeout(() => {
+      scrollToEnd();
+    }, 1);
   }, []);
 
   return (
     <View style={{flex: 1}}>
-      <ScrollView
-        // ref={(ref) => (content = ref)}
-        // onContentSizeChange={() => {
-        //   content.scrollToEnd({animated: false});
-        // }}
-        style={{marginBottom: 60}}>
+      {/* {fetching ? (
+        <Loading />
+      ) : ( */}
+      <ScrollView ref={scrollViewRef} style={{marginBottom: 60}}>
         {messages.map((item: any, idx: number) => (
           <Bubble
             msg={item.message}
-            email={auth().currentUser?.email}
+            email={auth().currentUser?.phoneNumber}
             sender={item.sender}
             key={idx}
           />
         ))}
       </ScrollView>
-
+      {/* )} */}
       <View style={styles.bottomView}>
         <TextInput
           style={styles.input}
@@ -120,12 +161,6 @@ const Chat = () => {
             console.log(messages);
           }}
         />
-
-        {/* <RegisterField
-          label="Message"
-          action={setNewMessage}
-          textType={newMessage}
-        /> */}
         <Pressable
           style={styles.sendBtn}
           onPress={() => {
