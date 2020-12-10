@@ -105,7 +105,7 @@ const NewUser = () => {
     // }).catch;
   };
 
-  const sendNotification = () => {
+  const sendNotification = async () => {
     let content: any = {contents: {en: 'test'}};
     console.log('send notification');
 

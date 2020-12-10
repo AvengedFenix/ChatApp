@@ -12,38 +12,77 @@ import {useLocation} from 'react-router-native';
 import auth from '@react-native-firebase/auth';
 import {cloudFunctions, db, fieldValue} from '../services/Firebase';
 import OneSignal from 'react-native-onesignal';
+import {ONESIGNAL_REST_API_ID, ONESIGNAL_PROJECT_ID} from '@env';
 
 const sendMessageFunction = cloudFunctions.httpsCallable('sendMessage');
+
+const headers: any = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+  Authorization: `Basic {{${ONESIGNAL_REST_API_ID}}}`,
+};
 
 const Chat = () => {
   const [messages, setMessages] = useState<any>([]);
   const [newMessage, setNewMessage] = useState('');
   const [fetching, setFetching] = useState(true);
 
-  // const scrollViewRef = React.createRef<ScrollView>();
-
   const location = useLocation();
   const id = location.state.id; //Paso de parametros con react router
   const chatConnection = db.collection('chats').doc(id);
+  // const chatRef = db.collection('chats').doc(id);
+
+  const notificationAPI = async () => {
+    let receiverId: string;
+    if (
+      auth().currentUser?.phoneNumber ===
+      (await chatConnection.get()).data().createdBy
+    ) {
+      receiverId = (await chatConnection.get()).data().receiverOneSignalId;
+    } else {
+      receiverId = (await chatConnection.get()).data().creatorOneSignalId;
+    }
+
+    console.log('reveiverid:', receiverId);
+
+    const body = {
+      app_id: ONESIGNAL_PROJECT_ID,
+      contents: {
+        en: newMessage,
+        es: newMessage,
+      },
+      headings: {
+        en: 'New message from: ' + auth().currentUser?.phoneNumber,
+        es: 'Nuevo mensaje de: ' + auth().currentUser?.phoneNumber,
+      },
+      include_player_ids: [receiverId],
+    };
+
+    const noti = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'post',
+      headers: headers,
+      body: JSON.stringify(body),
+    });
+
+    console.log(noti);
+  };
 
   const sendMessage = async () => {
     // await sendMessageFunction({message: newMessage, id: id});
 
-    await chatConnection.collection('messages').doc().set({
-      message: newMessage,
-      creationDate: fieldValue.serverTimestamp(),
-      sender: auth().currentUser?.phoneNumber,
-    });
-    setNewMessage('');
-  };
-
-  const onNotificationOpened = (message, data, isActive) => {
-    if (data.p2p_notification) {
-      for (var num in data.p2p_notification) {
-        // console.log(data.p2p_notification[num]);
-      }
+    try {
+      await chatConnection.collection('messages').doc().set({
+        message: newMessage,
+        creationDate: fieldValue.serverTimestamp(),
+        sender: auth().currentUser?.phoneNumber,
+      });
+      await notificationAPI();
+    } catch (error) {
+    } finally {
+      setNewMessage('');
     }
   };
+
   // const messagesListener = () => {};
 
   const getMessages = async () => {
@@ -52,19 +91,8 @@ const Chat = () => {
     console.log('antes de msgList');
 
     const msgList: any = [];
-    let content: any = {en: 'test'};
 
-    const chatRef = db.collection('chats').doc(id);
-    let receiverId: string;
-    if (
-      auth().currentUser?.phoneNumber === (await chatRef.get()).data().createdBy
-    ) {
-      receiverId = (await chatRef.get()).data().receiverOneSignalId;
-    } else {
-      receiverId = (await chatRef.get()).data().creatorOneSignalId;
-    }
-
-    await chatRef
+    await chatConnection
       .collection('messages')
       .orderBy('creationDate', 'asc')
       .onSnapshot(
@@ -82,7 +110,6 @@ const Chat = () => {
                 console.log('msg List', msgList);
 
                 msgList.push(data);
-
                 // content = {en: data};
 
                 break;
@@ -95,22 +122,6 @@ const Chat = () => {
 
           setMessages(msgList);
           setFetching(false);
-          try {
-            console.log('antes de notificacion', receiverId);
-
-            // OneSignal.postNotification(content, [], null, {
-            //   include_external_user_ids: [receiverId],
-            // });
-
-            OneSignal.postNotification(
-              content,
-              {},
-              {include_player_ids: [receiverId]},
-              {},
-            );
-          } catch (error) {
-            console.log('error', error);
-          }
         },
         (error) => {
           console.log('onSnapshot error', error);

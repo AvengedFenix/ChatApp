@@ -30,7 +30,7 @@ const PhoneField = ({
         width: 0,
         height: 5,
       },
-      shadowOpacity: 0.34,
+      shadowOpacity: 0.30,
       shadowRadius: 6.27,
       elevation: 10,
       marginVertical: 20,
