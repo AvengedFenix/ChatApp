@@ -122,12 +122,14 @@ const Chat = () => {
 
           setMessages(msgList);
           setFetching(false);
+          setNewMessage('');
         },
         (error) => {
           console.log('onSnapshot error', error);
         },
       );
 
+    setNewMessage('');
     console.log('msgList', msgList);
 
     console.log('messages', messages);
