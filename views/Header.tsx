@@ -19,7 +19,7 @@ const signOut = async () => {
 
 const Header = () => {
   const [showModal, setShowModal] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('+504');
   const [alert, setAlert] = useState<boolean>(true);
   let oneSignalId: string;
   OneSignal.getPermissionSubscriptionState((status) => {

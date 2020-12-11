@@ -34,7 +34,7 @@ const storeUser = async (email: string, oneSignal: string) => {
 };
 
 const NewUser = () => {
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [phoneNumber, setPhoneNumber] = useState<string>('+504');
   const [confirm, setConfirm] = useState<any>(null);
   const [code, setCode] = useState('');
   const [email, setEmail] = useState<string>('hola@hola.com');
