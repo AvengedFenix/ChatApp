@@ -17,47 +17,6 @@ const signOut = async () => {
   await auth().signOut();
 };
 
-const newChat = async (
-  phoneNumber: string,
-  oneSignalUserId: string,
-): boolean => {
-  console.log('phoneNumber', phoneNumber);
-
-  console.log('newChat', oneSignalUserId);
-
-  // newChatCloudFunction({
-  //   receiverPhoneNumber: phoneNumber,
-  //   oneSignalUserId: oneSignalUserId,
-  // });
-
-  const email: string | null | undefined = auth().currentUser?.phoneNumber;
-  const receiver = db.collection('users').doc(phoneNumber);
-  if (!(await receiver.get()).exists) {
-    console.log('no existe');
-    return false;
-  }
-  const newChatID: string = db.collection('chats').doc().id;
-  const senderRef = db.collection('users').doc(email?.toString());
-  const receiverRef = db.collection('users').doc(phoneNumber);
-  const receiverOneSignalId = (await receiverRef.get()).data().device;
-  await db.collection('chats').doc(newChatID).set({
-    id: newChatID,
-    createdBy: email,
-    creatorOneSignalId: oneSignalUserId,
-    receiverOneSignalId: receiverOneSignalId,
-    receiver: phoneNumber,
-    creationDate: fieldValue.serverTimestamp(),
-  });
-  await db.collection('chats').doc(newChatID).collection('messages').doc().set({
-    message: 'Your new conversation is ready, say hello!',
-    sender: 'system',
-    creationDate: fieldValue.serverTimestamp(),
-  });
-  await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
-  await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
-  return true;
-};
-
 const Header = () => {
   const [showModal, setShowModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -71,6 +30,55 @@ const Header = () => {
   const history = useHistory();
 
   console.log(auth().currentUser?.phoneNumber);
+
+  const newChat = async (
+    phoneNumber: string,
+    oneSignalUserId: string,
+  ): boolean => {
+    console.log('phoneNumber', phoneNumber);
+
+    console.log('newChat', oneSignalUserId);
+
+    // newChatCloudFunction({
+    //   receiverPhoneNumber: phoneNumber,
+    //   oneSignalUserId: oneSignalUserId,
+    // });
+
+    const email: string | null | undefined = auth().currentUser?.phoneNumber;
+    const receiver = db.collection('users').doc(phoneNumber);
+    if (!(await receiver.get()).exists) {
+      console.log('no existe');
+      setAlert(false);
+      return false;
+    }
+    const newChatID: string = db.collection('chats').doc().id;
+    const senderRef = db.collection('users').doc(email?.toString());
+    const receiverRef = db.collection('users').doc(phoneNumber);
+    const receiverOneSignalId = (await receiverRef.get()).data().device;
+    await db.collection('chats').doc(newChatID).set({
+      id: newChatID,
+      createdBy: email,
+      creatorOneSignalId: oneSignalUserId,
+      receiverOneSignalId: receiverOneSignalId,
+      receiver: phoneNumber,
+      creationDate: fieldValue.serverTimestamp(),
+    });
+    await db
+      .collection('chats')
+      .doc(newChatID)
+      .collection('messages')
+      .doc()
+      .set({
+        message: 'Your new conversation is ready, say hello!',
+        sender: 'system',
+        creationDate: fieldValue.serverTimestamp(),
+      });
+    await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
+    await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
+
+    setShowModal(false);
+    return true;
+  };
 
   return (
     <View style={styles.container}>
@@ -153,9 +161,9 @@ const Header = () => {
           />
           <Pressable
             style={styles.btnAddChat}
-            onPress={() => {
-              setAlert(newChat(phoneNumber, oneSignalId));
-              alert ? setShowModal(false) : null;
+            onPress={async () => {
+              newChat(phoneNumber.replace(/\s/g, ''), oneSignalId);
+              // alert ? setShowModal(false) : null;
             }}>
             <Text style={styles.btnModalText}>Create chat</Text>
           </Pressable>

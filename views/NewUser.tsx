@@ -34,9 +34,9 @@ const storeUser = async (email: string, oneSignal: string) => {
 };
 
 const NewUser = () => {
-  const [phoneNumber, setPhoneNumber] = useState<string>('+44 7444 555666');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [confirm, setConfirm] = useState<any>(null);
-  const [code, setCode] = useState('123456');
+  const [code, setCode] = useState('');
   const [email, setEmail] = useState<string>('hola@hola.com');
   const [password, setPassword] = useState<string>('hola1234');
   const [textAreaHeight, setTextAreaHeight] = useState(null);
@@ -77,8 +77,6 @@ const NewUser = () => {
   };
 
   const signIn = async () => {
-    console.log('wtf');
-
     try {
       await auth().signInWithEmailAndPassword(email, password);
       console.log('try');
@@ -103,22 +101,6 @@ const NewUser = () => {
     //   console.log();
 
     // }).catch;
-  };
-
-  const sendNotification = async () => {
-    let content: any = {contents: {en: 'test'}};
-    console.log('send notification');
-
-    try {
-      OneSignal.postNotification(
-        content,
-        {},
-        '3009bd3a-3d0c-4da1-a402-c1701b26d647',
-        {},
-      );
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   const onContentSizeChange = ({nativeEvent: event}) => {
@@ -202,16 +184,16 @@ const NewUser = () => {
             }}>
             <Text style={styles.submitText}>Sign In</Text>
           </Pressable>
-          <Pressable style={styles.submitPressable} onPress={sendNotification}>
-            <Text style={styles.submitText}>Send Noti</Text>
-          </Pressable>
           <Modal
             animationType="slide"
             transparent={false}
             visible={codeModal}
             onRequestClose={() => setCodeModal(false)}>
             <View style={styles.container}>
-              <Text>Enter the code your received via SMS</Text>
+              <Text
+                style={{alignSelf: 'center', fontSize: 28, marginTop: '20%'}}>
+                Enter the code your received via SMS
+              </Text>
               <RegisterField label="code" textType={code} action={setCode} />
               <Pressable style={styles.submitPressable} onPress={confirmCode}>
                 <Text style={styles.submitText}>Confirmar</Text>

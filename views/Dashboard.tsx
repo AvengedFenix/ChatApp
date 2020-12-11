@@ -43,8 +43,6 @@ const Dashboard = ({user}: Props) => {
 
       const userChatList = chatIDs.data().chat;
 
-      // userChatList.map(async (doc: any) => {});
-
       for (const item of userChatList) {
         const chatInfo = await db.collection('chats').doc(item).get();
 
@@ -72,7 +70,11 @@ const Dashboard = ({user}: Props) => {
         onPress={() => {
           history.push('/chat', {id: item.id});
         }}>
-        <ChatPreview email={item.receiver} msg={item.createdBy} />
+        {user.phoneNumber === item.receiver ? (
+          <ChatPreview email={item.createdBy} msg={item.createdBy} />
+        ) : (
+          <ChatPreview email={item.receiver} msg={item.createdBy} />
+        )}
       </Pressable>
     );
   };
