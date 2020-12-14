@@ -4,6 +4,7 @@ import ChatPreview from './../components/ChatPreview';
 import {useHistory} from 'react-router-native';
 import {cloudFunctions, db} from '../services/Firebase';
 import Loading from '../components/Loading';
+import NewChatModal from './../components/NewChatModal';
 
 // const db = firestore();
 // cloudFunctions.useFunctionsEmulator('http://localhost:5001');
@@ -94,6 +95,13 @@ const Dashboard = ({user}: Props) => {
       </Pressable>
       {fetching ? (
         <Loading />
+      ) : chats.length === 0 ? (
+        <View style={{alignItems: 'center', marginVertical: '40%'}}>
+          <Text style={{fontSize: 32, marginVertical: 8}}>
+            You don't have any conversation
+          </Text>
+          <NewChatModal />
+        </View>
       ) : (
         chats.map((item: any, idx: number) => {
           return <Card key={idx} item={item} />;

@@ -35,6 +35,8 @@ class App extends React.Component {
     this.state = {initializing: true, user: null};
     OneSignal.setLogLevel(6, 0);
 
+    console.log(ONESIGNAL_PROJECT_ID);
+
     try {
       OneSignal.init(ONESIGNAL_PROJECT_ID, {
         kOSSettingsKeyAutoPrompt: false,
@@ -100,7 +102,6 @@ class App extends React.Component {
     return (
       <NativeRouter>
         <View style={{flex: 1}}>
-          {console.log('process', process.env.NODE_ENV)}
           <Header />
           {console.log(this.state.user)}
           <Switch>

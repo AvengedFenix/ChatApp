@@ -45,7 +45,11 @@ const PhoneField = ({
         placeholder={label}
         value={textType}
         onChangeText={(text) => {
-          action(text);
+          if (label === 'Phone number') {
+            action(text.replace(/\s|[a-z]|[A-Z]|-/g, ''));
+          } else {
+            action(text);
+          }
           console.log(textType);
         }}
       />

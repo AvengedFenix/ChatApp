@@ -8,6 +8,7 @@ import firebase from '@react-native-firebase/app';
 import {useHistory} from 'react-router-native';
 import OneSignal from 'react-native-onesignal';
 import {db, cloudFunctions} from '../services/Firebase';
+import NewChatModal from '../components/NewChatModal';
 
 const fieldValue = firebase.firestore.FieldValue;
 
@@ -18,67 +19,15 @@ const signOut = async () => {
 };
 
 const Header = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('+504');
-  const [alert, setAlert] = useState<boolean>(true);
-  let oneSignalId: string;
-  OneSignal.getPermissionSubscriptionState((status) => {
-    console.log('Onesignal');
-    oneSignalId = status.userId;
-  });
+  // let oneSignalId: string;
+  // OneSignal.getPermissionSubscriptionState((status) => {
+  //   console.log('Onesignal');
+  //   oneSignalId = status.userId;
+  // });
 
   const history = useHistory();
 
   console.log(auth().currentUser?.phoneNumber);
-
-  const newChat = async (
-    phoneNumber: string,
-    oneSignalUserId: string,
-  ): boolean => {
-    console.log('phoneNumber', phoneNumber);
-
-    console.log('newChat', oneSignalUserId);
-
-    // newChatCloudFunction({
-    //   receiverPhoneNumber: phoneNumber,
-    //   oneSignalUserId: oneSignalUserId,
-    // });
-
-    const email: string | null | undefined = auth().currentUser?.phoneNumber;
-    const receiver = db.collection('users').doc(phoneNumber);
-    if (!(await receiver.get()).exists) {
-      console.log('no existe');
-      setAlert(false);
-      return false;
-    }
-    const newChatID: string = db.collection('chats').doc().id;
-    const senderRef = db.collection('users').doc(email?.toString());
-    const receiverRef = db.collection('users').doc(phoneNumber);
-    const receiverOneSignalId = (await receiverRef.get()).data().device;
-    await db.collection('chats').doc(newChatID).set({
-      id: newChatID,
-      createdBy: email,
-      creatorOneSignalId: oneSignalUserId,
-      receiverOneSignalId: receiverOneSignalId,
-      receiver: phoneNumber,
-      creationDate: fieldValue.serverTimestamp(),
-    });
-    await db
-      .collection('chats')
-      .doc(newChatID)
-      .collection('messages')
-      .doc()
-      .set({
-        message: 'Your new conversation is ready, say hello!',
-        sender: 'system',
-        creationDate: fieldValue.serverTimestamp(),
-      });
-    await senderRef.update({chat: fieldValue.arrayUnion(newChatID)});
-    await receiverRef.update({chat: fieldValue.arrayUnion(newChatID)});
-
-    setShowModal(false);
-    return true;
-  };
 
   return (
     <View style={styles.container}>
@@ -93,19 +42,13 @@ const Header = () => {
         <Text style={styles.title}>Chats</Text>
       </Pressable>
       <View style={styles.btnContainer}>
-        <Pressable
-          style={styles.btnAdd}
-          onPress={() => {
-            setShowModal(true);
-          }}>
-          <Text style={styles.btnText}>Add</Text>
-        </Pressable>
+        <NewChatModal />
         <Pressable style={styles.btnLogOut} onPress={signOut}>
           <Text style={styles.btnText}>Log Out</Text>
           {/* <Off width={240} height={40} /> */}
         </Pressable>
       </View>
-      <Modal
+      {/* <Modal
         animationType="slide"
         transparent={false}
         visible={showModal}
@@ -175,7 +118,7 @@ const Header = () => {
             <Text style={styles.btnModalText}>Cancel</Text>
           </Pressable>
         </View>
-      </Modal>
+      </Modal> */}
     </View>
   );
 };
@@ -217,11 +160,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginHorizontal: 5,
   },
-  btnAdd: {
-    backgroundColor: '#4CCC1F',
-    borderRadius: 6,
-    marginHorizontal: 5,
-  },
+
   btnText: {
     fontSize: 16,
     paddingHorizontal: '3%',
@@ -229,27 +168,6 @@ const styles = StyleSheet.create({
     color: 'white',
     alignSelf: 'center',
     textAlign: 'right',
-  },
-  btnAddChat: {
-    backgroundColor: '#4CCC1F',
-    justifyContent: 'center',
-    // marginHorizontal: '10%',
-    alignSelf: 'center',
-    borderRadius: 12,
-  },
-  btnCancel: {
-    marginTop: 20,
-    backgroundColor: '#dc3545',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  btnModalText: {
-    fontSize: 20,
-    color: 'white',
-    alignSelf: 'center',
-    paddingHorizontal: '5%',
-    paddingVertical: '4%',
   },
 });
 
